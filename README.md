@@ -21,3 +21,9 @@ int main(int argc, char** argv) {
     return 0;
 }
 ```
+```
+./cli-app --name Shreejit
+Hello, Shreejit
+./cli-app -n "Shreejit Murthy"
+Hello, Shreejit Murthy
+```
