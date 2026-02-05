@@ -12,6 +12,7 @@ int main(int argc, char** argv) {
     cl.exec("./main");
     cl.version("0.1.0");
     cl.description("The description to my very awesome CLI program.");
+    cl.short_description("This is my CLI program.");
     
     cl.flag("name", name_response, "n");
 
