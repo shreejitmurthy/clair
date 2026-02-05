@@ -19,9 +19,11 @@
 class clair {
 public:
     clair(const std::string& name) { _name = name; }
+    void exec(const std::string& exec) { _exec = exec; }
     void version(const std::string& version) { _version = version; }
     void fatal(bool f) { _fatal = f; }
     void description(const std::string& description) { _description = description; };
+    void short_description(const std::string& short_description) { _short_desc = short_description; }
     // the value of the flag as string
     using Callback = std::function<void(std::string)>;
     void flag(
@@ -48,7 +50,9 @@ public:
     void parse(int argc, char** argv);
 private:
     std::string _name;
+    std::string _exec;
     std::string _description;
+    std::string _short_desc;
     std::string _version;
     bool _fatal = false;
 
