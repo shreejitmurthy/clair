@@ -4,8 +4,6 @@
 
 #include "clair.hh"
 
-#include <algorithm>
-
 inline bool check_prefix(const std::string& s, const std::string& p) {
     return s.length() >= p.length() && s.substr(0, p.length()) == p;
 }
@@ -17,11 +15,9 @@ void clair::parse(int argc, char** argv) {
         auto& s = raw_args[i];
         auto& ns = raw_args[i + 1];
         if (check_prefix(s, "--") && !check_prefix(ns, "--")) {
-            for (auto& f : flags) {
-                if (f.first.long_name == s.substr(2, s.length())) {
-                    f.second(ns);
-                }
-            }
+            exec_long(s, ns);
+        } else if (check_prefix(s, "-") && !check_prefix(ns, "-")) {
+            exec_short(s, ns);
         }
     }
 }
