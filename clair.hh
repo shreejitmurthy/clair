@@ -99,4 +99,6 @@ private:
             }
         }
     }
+
+    // TODO: automatic `--help`
 };
