@@ -1,5 +1,5 @@
 # clair
-**Quick and Simple Parser for CLI Application**
+**Quick and Simple Parser for CLI Applications**
 
 Minimal Example:
 ```cpp
