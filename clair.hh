@@ -104,15 +104,15 @@ private:
         );
 
         out += "USAGE\n";
-        // out.append(std::format("\t{} [GLOBAL_OPTIONS] <command> [COMMAND_OPTIONS] [ARGS...]\n", _exec));
-        out.append(std::format("\t{} [GLOBAL_OPTIONS] [ARGS...]\n", _exec));
-        // out.append(std::format("\t{} [GLOBAL_OPTIONS] <subcommand> ...\n", _exec));
-        out.append(std::format("\t{} --help\n", _exec));
-        // out.append(std::format("\t{} <command> --help\n", _exec));
-        out.append(std::format("\t{} --version\n\n", _exec));
+        // out.append(std::format("    {} [GLOBAL_OPTIONS] <command> [COMMAND_OPTIONS] [ARGS...]\n", _exec));
+        out.append(std::format("    {} [GLOBAL_OPTIONS] [ARGS...]\n", _exec));
+        // out.append(std::format("    {} [GLOBAL_OPTIONS] <subcommand> ...\n", _exec));
+        out.append(std::format("    {} --help\n", _exec));
+        // out.append(std::format("    {} <command> --help\n", _exec));
+        out.append(std::format("    {} --version\n\n", _exec));
 
         out += "DESCRIPTION\n";
-        out.append(std::format("\t{}\n\n", _description));
+        out.append(std::format("    {}\n\n", _description));
 
         // TODO: Commands support
         // out += "COMMANDS\n";
@@ -129,13 +129,13 @@ private:
         oss << "GLOBAL OPTIONS\n";
         for (auto& f : flags) {
             std::string names = make_names(f);
-            oss << '\t'
+            oss << "    "
                 << std::left << std::setw(static_cast<int>(maxlen + 2)) << names
                 << f.first.desc << '\n';
         }
         out += oss.str();
 
-        if (_notes != "") out += "NOTES\n\t" + _notes + "\n";
+        if (_notes != "") out += "NOTES\n    " + _notes + "\n";
 
         std::cout << out << std::endl;
     }
