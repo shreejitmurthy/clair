@@ -16,6 +16,8 @@
 
 #define __DEFAULT_SHORT_FLAG "__undef_short"
 
+#define __PHI 0x9e3779b97f4a7c15ULL
+
 class clair {
 public:
     clair(const std::string& name) { _name = name; }
@@ -35,8 +37,8 @@ public:
         FlagDef n = {name, name_short};
         for (auto& f : flags) {
             /* 
-             * The application will behave strange or break if flags have the same name, so these must be 
-             * runtime errors, fatal enabled or not. 
+             * The application will behave strange or break if flags have the same name, 
+             * so these must be runtime errors, fatal enabled or not. 
              */
             if (f.first.long_name == name) {
                 throw std::runtime_error(std::format("Already defined {} as long name", name));
@@ -69,11 +71,11 @@ private:
         std::size_t operator()(FlagDef const& k) const noexcept {
             std::size_t h1 = std::hash<std::string>{}(k.long_name);
             std::size_t h2 = std::hash<std::string>{}(k.short_name);
-            return h1 ^ (h2 + 0x9e3779b97f4a7c15ULL + (h1<<6) + (h1>>2));
+            // Fibonacci hashing
+            return h1 ^ (h2 + __PHI + (h1<<6) + (h1>>2));
         }
     } FlagDefHash;
 
-    // vector stores long and sho {rt names.
     std::unordered_map<FlagDef, Callback, FlagDefHash> flags;
 
     void exec_long(const std::string& s, const std::string& ns) {
