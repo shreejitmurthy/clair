@@ -133,7 +133,7 @@ private:
                 << std::left << std::setw(static_cast<int>(maxlen + 2)) << names
                 << f.first.desc << '\n';
         }
-        out += oss.str();
+        out += oss.str() + "\n";
 
         if (_notes != "") out += "NOTES\n    " + _notes;
 
