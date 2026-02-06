@@ -53,3 +53,4 @@ GLOBAL OPTIONS
 NOTES
     This is just an example, there is more to be done with clair!
 ```
+*Written in 79 semicolons (153 LOC)*
