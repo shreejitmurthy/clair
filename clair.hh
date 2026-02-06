@@ -135,7 +135,7 @@ private:
         }
         out += oss.str();
 
-        if (_notes != "") out += "NOTES\n    " + _notes + "\n";
+        if (_notes != "") out += "NOTES\n    " + _notes;
 
         std::cout << out << std::endl;
     }
