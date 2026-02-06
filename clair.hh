@@ -13,6 +13,8 @@
 #include <stdexcept>
 #include <format>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 
 #define __DEFAULT_SHORT_FLAG "__undef_short"
 
@@ -20,12 +22,21 @@
 
 class clair {
 public:
-    clair(const std::string& name) { _name = name; }
+    clair(const std::string& name);
     void exec(const std::string& exec) { _exec = exec; }
     void version(const std::string& version) { _version = version; }
     void fatal(bool f) { _fatal = f; }
     void description(const std::string& description) { _description = description; };
     void short_description(const std::string& short_description) { _short_desc = short_description; }
+    void enable_short_help(char short_form) { 
+        for (auto& f : flags) {
+            if (f.first.long_name == "help" && f.first.short_name == __DEFAULT_SHORT_FLAG) {
+                // FIXME
+                // f.first.short_name = short_form;
+            }
+        }
+    }
+    void notes(const std::string& n) { _notes = n; }
     // the value of the flag as string
     using Callback = std::function<void(std::string)>;
     void flag(
@@ -33,22 +44,7 @@ public:
         Callback cb,
         std::string name_short = __DEFAULT_SHORT_FLAG,
         std::string description = ""
-    ) {
-        FlagDef n = {name, name_short};
-        for (auto& f : flags) {
-            /* 
-             * The application will behave strange or break if flags have the same name, 
-             * so these must be runtime errors, fatal enabled or not. 
-             */
-            if (f.first.long_name == name) {
-                throw std::runtime_error(std::format("Already defined {} as long name", name));
-            } else if (f.first.short_name == name_short && name_short != __DEFAULT_SHORT_FLAG) {
-                throw std::runtime_error(std::format("Already defined {} as short name", name_short));
-            }
-        }
-
-        flags[n] = cb;
-    }
+    );
     void parse(int argc, char** argv);
 private:
     std::string _name;
@@ -56,11 +52,14 @@ private:
     std::string _description;
     std::string _short_desc;
     std::string _version;
+    std::string _notes;
     bool _fatal = false;
+    bool _help_short_form = false;
 
     typedef struct FlagDef {
         std::string long_name;
         std::string short_name;
+        std::string desc;
 
         bool operator==(FlagDef const& o) const {
             return long_name == o.long_name && short_name == o.short_name;
@@ -78,29 +77,68 @@ private:
 
     std::unordered_map<FlagDef, Callback, FlagDefHash> flags;
 
-    void exec_long(const std::string& s, const std::string& ns) {
+    bool exec_long(const std::string& s, const std::string& ns) {
         for (auto& f : flags) {
             if (f.first.long_name == s.substr(2, s.length())) {
                 f.second(ns);
-            } else {
-                auto err = std::format("Unknown flag '{}'!\n", s);
-                if (_fatal) throw std::runtime_error(err);
-                else std::cout << err;
+                return true;
             }
         }
-        
+        return false;
     }
-    void exec_short(const std::string& s, const std::string& ns) {
+
+    bool exec_short(const std::string& s, const std::string& ns) {
         for (auto& f : flags) {
             if (f.first.short_name == s.substr(1, s.length())) {
                 f.second(ns);
-            } else {
-                auto err = std::format("Unknown flag '{}'!\n", s);
-                if (_fatal) throw std::runtime_error(err);
-                else std::cout << err;
+                return true;
             }
         }
+        return false;
     }
 
-    // TODO: automatic `--help`
+    void help(std::string) {
+        std::string out = std::format("{} v{} {}\n\n", 
+            _name, _version, 
+            (_short_desc == "") ? _short_desc : std::format("- {}", _short_desc)
+        );
+
+        out += "USAGE\n";
+        // out.append(std::format("\t{} [GLOBAL_OPTIONS] <command> [COMMAND_OPTIONS] [ARGS...]\n", _exec));
+        out.append(std::format("\t{} [GLOBAL_OPTIONS] [ARGS...]\n", _exec));
+        // out.append(std::format("\t{} [GLOBAL_OPTIONS] <subcommand> ...\n", _exec));
+        out.append(std::format("\t{} --help\n", _exec));
+        // out.append(std::format("\t{} <command> --help\n", _exec));
+        out.append(std::format("\t{} --version\n\n", _exec));
+
+        out += "DESCRIPTION\n";
+        out.append(std::format("\t{}\n\n", _description));
+
+        // TODO: Commands support
+        // out += "COMMANDS\n";
+
+        auto make_names = [&](const auto& f) {
+            bool has_short = f.first.short_name != __DEFAULT_SHORT_FLAG;
+            return has_short
+                ? ("-" + f.first.short_name + ", --" + f.first.long_name)
+                : ("--" + f.first.long_name);
+        };
+        std::size_t maxlen = 0;
+        for (auto& f : flags) maxlen = std::max(maxlen, make_names(f).size());
+        std::ostringstream oss;
+        oss << "GLOBAL OPTIONS\n";
+        for (auto& f : flags) {
+            std::string names = make_names(f);
+            oss << '\t'
+                << std::left << std::setw(static_cast<int>(maxlen + 2)) << names
+                << f.first.desc << '\n';
+        }
+        out += oss.str();
+
+        if (_notes != "") out += "NOTES\n\t" + _notes + "\n";
+
+        std::cout << out << std::endl;
+    }
 };
+
+// TODO: Common options, arguments, examples, exit status, configuration, see also
