@@ -49,6 +49,7 @@ DESCRIPTION
 GLOBAL OPTIONS
     -n, --name  Provide your name so we can say hello!
     --help      Show help and exit.
+
 NOTES
     This is just an example, there is more to be done with clair!
 ```
