@@ -38,6 +38,7 @@ void clair::parser::option(std::string name, Callback cb, int expect, std::strin
 }
 
 void clair::parser::parse(int argc, char **argv) {
+    if (options.size() == 0) return;
     std::vector<std::string> raw_args(argv, argv + argc);
 
     if (_exec == "") _exec = argv[0];
