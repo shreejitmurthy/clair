@@ -19,6 +19,7 @@ void sum(std::vector<std::string> v) {
 int main(int argc, char** argv) {
     clair::parser app("My CLI Program");
 
+    // Remove this to use the actual name of the executable.
     app.exec("./cli-app");
     app.version("0.1.0");
     app.description("The description to my very awesome CLI program.");
