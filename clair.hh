@@ -20,9 +20,11 @@
 
 #define __PHI 0x9e3779b97f4a7c15ULL
 
-class clair {
+namespace clair {
+
+class parser {
 public:
-    clair(const std::string& name);
+    parser(const std::string& name);
     void exec(const std::string& exec) { _exec = exec; }
     void version(const std::string& version) { _version = version; }
     void fatal(bool f) { _fatal = f; }
@@ -142,6 +144,7 @@ private:
         std::size_t maxlen = 0;
         for (auto& f : flags) maxlen = std::max(maxlen, make_names(f).size());
         std::ostringstream oss;
+        // Give option to sort this list in future.
         oss << "OPTIONS\n";
         for (auto& f : flags) {
             std::string names = make_names(f);
@@ -167,3 +170,5 @@ private:
  *  - Configuration
  *  - See also
  */
+
+};

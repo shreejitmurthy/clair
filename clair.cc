@@ -8,7 +8,7 @@ inline bool check_prefix(const std::string& s, const std::string& p) {
     return s.length() >= p.length() && s.substr(0, p.length()) == p;
 }
 
-clair::clair(const std::string& name) : _name(name) {
+clair::parser::parser(const std::string& name) : _name(name) {
     FlagDef n = {"help", __DEFAULT_SHORT_FLAG, "Show help and exit."};
 
     flags.emplace(n, [this](std::vector<std::string> arg) {
@@ -16,7 +16,7 @@ clair::clair(const std::string& name) : _name(name) {
     });
 }
 
-void clair::flag(std::string name, Callback cb, int expect, std::string description, char name_short) {
+void clair::parser::flag(std::string name, Callback cb, int expect, std::string description, char name_short) {
     FlagDef n = {name, name_short, description, expect};
     for (auto& f : flags) {
         /* 
@@ -33,8 +33,10 @@ void clair::flag(std::string name, Callback cb, int expect, std::string descript
     flags[n] = cb;
 }
 
-void clair::parse(int argc, char **argv) {
+void clair::parser::parse(int argc, char **argv) {
     std::vector<std::string> raw_args(argv, argv + argc);
+
+    if (_exec == "") _exec = argv[0];
     
     for (int i = 1; i < raw_args.size(); i++) {
         auto& s = raw_args[i];
