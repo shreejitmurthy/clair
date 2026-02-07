@@ -25,8 +25,8 @@ int main(int argc, char** argv) {
     app.short_description("This is my CLI program.");
     app.notes("This is just an example, there is more to be done with clair!");
     
-    app.flag("name", name_response, 1, "Provide your name so we can say hello!", 'n');
-    app.flag("sum", sum, 3, "Enter 3 arguments and get the sum!");
+    app.option("name", name_response, 1, "Provide your name so we can say hello!", 'n');
+    app.option("sum", sum, 3, "Enter 3 arguments and get the sum!");
 
     app.parse(argc, argv);
 
