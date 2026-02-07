@@ -16,7 +16,7 @@
 #include <iomanip>
 #include <sstream>
 
-#define __DEFAULT_SHORT_FLAG '!'
+#define __DEFAULT_SHORT_OPT '!'
 
 #define __PHI 0x9e3779b97f4a7c15ULL
 
@@ -46,29 +46,29 @@ public:
     void description(const std::string& description) { _description = description; };
     void short_description(const std::string& short_description) { _short_desc = short_description; }
     void enable_short_help(char short_form) { 
-        for (auto f : flags) {
-            if (f.first.long_name == "help" && f.first.short_name == __DEFAULT_SHORT_FLAG) {
+        for (auto f : options) {
+            if (f.first.long_name == "help" && f.first.short_name == __DEFAULT_SHORT_OPT) {
                 // TODO: set to 'h'
             }
         }
     }
     void notes(const std::string& n) { _notes = n; }
-    // the value of the flag as string
+    // the value/s of the option as string vector
     using Callback = std::function<void(std::vector<std::string>)>;
-    void flag(
+    void option(
         std::string name, 
         Callback cb,
         ArgumentTypes argtype,
         int expect = 1,
         std::string description = "",
-        char name_short = __DEFAULT_SHORT_FLAG
+        char name_short = __DEFAULT_SHORT_OPT
     );
-    void flag(
+    void option(
         std::string name, 
         Callback cb,
         int expect = 1,
         std::string description = "",
-        char name_short = __DEFAULT_SHORT_FLAG
+        char name_short = __DEFAULT_SHORT_OPT
     );
     void parse(int argc, char** argv);
 private:
@@ -81,32 +81,32 @@ private:
     bool _fatal = false;
     bool _help_short_form = false;
 
-    typedef struct FlagDef {
+    typedef struct OptionDef {
         std::string long_name;
         char short_name;
         std::string desc;
         int expected_args;
         ArgumentTypes expected_type;
 
-        // Flags are differentiated by their long and short name.
-        bool operator==(FlagDef const& o) const {
+        // Options are differentiated by their long and short name.
+        bool operator==(OptionDef const& o) const {
             return long_name == o.long_name && short_name == o.short_name;
         }
-    } FlagDef;
+    } OptionDef;
 
-    typedef struct FlagDefHash {
-        std::size_t operator()(FlagDef const& k) const noexcept {
+    typedef struct OptionDefHash {
+        std::size_t operator()(OptionDef const& k) const noexcept {
             std::size_t h1 = std::hash<std::string>{}(k.long_name);
             std::size_t h2 = std::hash<char>{}(k.short_name);
             // Fibonacci hashing
             return h1 ^ (h2 + __PHI + (h1<<6) + (h1>>2));
         }
-    } FlagDefHash;
+    } OptionDefHash;
 
-    std::unordered_map<FlagDef, Callback, FlagDefHash> flags;
+    std::unordered_map<OptionDef, Callback, OptionDefHash> options;
 
     bool exec_long(std::vector<std::string> args, int i, const std::string& s) {
-        for (auto& f : flags) {
+        for (auto& f : options) {
             std::vector<std::string> ns;
             int n = f.first.expected_args;
             if (i + 1 < args.size()) {
@@ -123,16 +123,16 @@ private:
     }
 
     bool exec_short(std::vector<std::string> args, int i, const std::string& s) {
-        for (auto& f : flags) {
+        for (auto& o : options) {
             std::vector<std::string> ns;
-            int n = f.first.expected_args;
+            int n = o.first.expected_args;
             if (i + 1 < args.size()) {
                 const auto start = i + 1;
                 const auto end = std::min((int)args.size(), start + n);
                 ns.insert(ns.end(), args.begin() + start, args.begin() + end);
             }
-            if (f.first.short_name == s[1]) {
-                f.second(ns);
+            if (o.first.short_name == s[1]) {
+                o.second(ns);
                 return true;
             }
         }
@@ -160,17 +160,17 @@ private:
         // out += "COMMANDS\n";
 
         auto make_names = [&](const auto& f) {
-            bool has_short = f.first.short_name != __DEFAULT_SHORT_FLAG;
+            bool has_short = f.first.short_name != __DEFAULT_SHORT_OPT;
             return has_short
               ? (std::string("-") + std::string(1, f.first.short_name) + ", --" + f.first.long_name)
               : (std::string("--") + f.first.long_name);   
         };
         std::size_t maxlen = 0;
-        for (auto& f : flags) maxlen = std::max(maxlen, make_names(f).size());
+        for (auto& f : options) maxlen = std::max(maxlen, make_names(f).size());
         std::ostringstream oss;
         // Give option to sort this list in future.
         oss << "OPTIONS\n";
-        for (auto& f : flags) {
+        for (auto& f : options) {
             std::string names = make_names(f);
             oss << "    "
                 << std::left << std::setw(static_cast<int>(maxlen + 2)) << names
