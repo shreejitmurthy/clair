@@ -22,6 +22,21 @@
 
 namespace clair {
 
+enum class ArgumentTypes {
+    String = 0,  // default
+
+    // ato/i/f
+    Int,
+    Double,
+    // str/ol/oll/oul/oull
+    Long,
+    LongLong,
+    ULong,
+    ULongLong,
+
+    Bool
+};
+    
 class parser {
 public:
     parser(const std::string& name);
@@ -31,16 +46,23 @@ public:
     void description(const std::string& description) { _description = description; };
     void short_description(const std::string& short_description) { _short_desc = short_description; }
     void enable_short_help(char short_form) { 
-        for (auto& f : flags) {
+        for (auto f : flags) {
             if (f.first.long_name == "help" && f.first.short_name == __DEFAULT_SHORT_FLAG) {
-                // FIXME
-                // f.first.short_name = short_form;
+                // TODO: set to 'h'
             }
         }
     }
     void notes(const std::string& n) { _notes = n; }
     // the value of the flag as string
     using Callback = std::function<void(std::vector<std::string>)>;
+    void flag(
+        std::string name, 
+        Callback cb,
+        ArgumentTypes argtype,
+        int expect = 1,
+        std::string description = "",
+        char name_short = __DEFAULT_SHORT_FLAG
+    );
     void flag(
         std::string name, 
         Callback cb,
@@ -64,7 +86,9 @@ private:
         char short_name;
         std::string desc;
         int expected_args;
+        ArgumentTypes expected_type;
 
+        // Flags are differentiated by their long and short name.
         bool operator==(FlagDef const& o) const {
             return long_name == o.long_name && short_name == o.short_name;
         }

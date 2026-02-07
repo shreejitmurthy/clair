@@ -16,8 +16,8 @@ clair::parser::parser(const std::string& name) : _name(name) {
     });
 }
 
-void clair::parser::flag(std::string name, Callback cb, int expect, std::string description, char name_short) {
-    FlagDef n = {name, name_short, description, expect};
+void clair::parser::flag(std::string name, Callback cb, ArgumentTypes argtype, int expect, std::string description, char name_short) {
+    FlagDef n = {name, name_short, description, expect, argtype};
     for (auto& f : flags) {
         /* 
          * The application will behave strange or break if options have the same name, 
@@ -31,6 +31,10 @@ void clair::parser::flag(std::string name, Callback cb, int expect, std::string 
     }
 
     flags[n] = cb;
+}
+
+void clair::parser::flag(std::string name, Callback cb, int expect, std::string description, char name_short) {
+    flag(name, cb, ArgumentTypes::String, expect, description, name_short);
 }
 
 void clair::parser::parse(int argc, char **argv) {
