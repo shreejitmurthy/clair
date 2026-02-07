@@ -1,23 +1,34 @@
 #include <iostream>
+#include <cstdlib>
 
 #include "../clair.hh"
 
-void name_response(std::string v) {
-    std::cout << "Hello, " << v << std::endl;
+void name_response(std::vector<std::string> v) {
+    std::cout << "Hello, " << v[0] << std::endl;
+}
+
+void sum(std::vector<std::string> v) {
+    int s = 0;
+    for (auto i : v) {
+        int n = std::atoi(i.c_str());
+        s += n;
+    }
+    std::cout << "The sum is: " << s << std::endl;
 }
 
 int main(int argc, char** argv) {
-    clair cl("My CLI Program");
+    clair::parser app("My CLI Program");
 
-    cl.exec("./main");
-    cl.version("0.1.0");
-    cl.description("The description to my very awesome CLI program.");
-    cl.short_description("This is my CLI program.");
-    cl.notes("This is just an example, there is more to be done with clair!");
+    app.exec("./cli-app");
+    app.version("0.1.0");
+    app.description("The description to my very awesome CLI program.");
+    app.short_description("This is my CLI program.");
+    app.notes("This is just an example, there is more to be done with clair!");
     
-    cl.flag("name", name_response, "n", "Provide your name so we can say hello!");
+    app.flag("name", name_response, 1, "Provide your name so we can say hello!", 'n');
+    app.flag("sum", sum, 3, "Enter 3 arguments and get the sum!");
 
-    cl.parse(argc, argv);
+    app.parse(argc, argv);
 
     return 0;
 }
