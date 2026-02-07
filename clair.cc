@@ -11,17 +11,16 @@ inline bool check_prefix(const std::string& s, const std::string& p) {
 clair::clair(const std::string& name) : _name(name) {
     FlagDef n = {"help", __DEFAULT_SHORT_FLAG, "Show help and exit."};
 
-    flags.emplace(n, [this](std::string arg) {
-        this->help(std::move(arg));
+    flags.emplace(n, [this](std::vector<std::string> arg) {
+        this->help(arg);
     });
 }
 
-
-void clair::flag(std::string name, Callback cb, std::string name_short, std::string description) {
-    FlagDef n = {name, name_short, description};
+void clair::flag(std::string name, Callback cb, int expect, std::string description, char name_short) {
+    FlagDef n = {name, name_short, description, expect};
     for (auto& f : flags) {
         /* 
-         * The application will behave strange or break if flags have the same name, 
+         * The application will behave strange or break if options have the same name, 
          * so these must be runtime errors, fatal enabled or not. 
          */
         if (f.first.long_name == name) {
@@ -39,19 +38,23 @@ void clair::parse(int argc, char **argv) {
     
     for (int i = 1; i < raw_args.size(); i++) {
         auto& s = raw_args[i];
+        // We'll check if the next arg is an option.
         auto& ns = raw_args[i + 1];
+        
         if (check_prefix(s, "--") && !check_prefix(ns, "--")) {
-            if (!exec_long(s, ns)) {
+            if (!exec_long(raw_args, i, s)) {
                 auto err = std::format("Unknown flag '{}'!\n", s);
                 if (_fatal) throw std::runtime_error(err);
                 else std::cout << err;
             }
         } else if (check_prefix(s, "-") && !check_prefix(ns, "-")) {
-            if (!exec_short(s, ns)) {
+            if (!exec_short(raw_args, i, s)) {
                 auto err = std::format("Unknown flag '{}'!\n", s);
                 if (_fatal) throw std::runtime_error(err);
                 else std::cout << err;
             }
+        } else {
+            // TODO: Error handle this.
         }
     }
 }

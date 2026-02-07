@@ -16,7 +16,7 @@
 #include <iomanip>
 #include <sstream>
 
-#define __DEFAULT_SHORT_FLAG "__undef_short"
+#define __DEFAULT_SHORT_FLAG '!'
 
 #define __PHI 0x9e3779b97f4a7c15ULL
 
@@ -38,12 +38,13 @@ public:
     }
     void notes(const std::string& n) { _notes = n; }
     // the value of the flag as string
-    using Callback = std::function<void(std::string)>;
+    using Callback = std::function<void(std::vector<std::string>)>;
     void flag(
         std::string name, 
         Callback cb,
-        std::string name_short = __DEFAULT_SHORT_FLAG,
-        std::string description = ""
+        int expect = 1,
+        std::string description = "",
+        char name_short = __DEFAULT_SHORT_FLAG
     );
     void parse(int argc, char** argv);
 private:
@@ -58,8 +59,9 @@ private:
 
     typedef struct FlagDef {
         std::string long_name;
-        std::string short_name;
+        char short_name;
         std::string desc;
+        int expected_args;
 
         bool operator==(FlagDef const& o) const {
             return long_name == o.long_name && short_name == o.short_name;
@@ -69,7 +71,7 @@ private:
     typedef struct FlagDefHash {
         std::size_t operator()(FlagDef const& k) const noexcept {
             std::size_t h1 = std::hash<std::string>{}(k.long_name);
-            std::size_t h2 = std::hash<std::string>{}(k.short_name);
+            std::size_t h2 = std::hash<char>{}(k.short_name);
             // Fibonacci hashing
             return h1 ^ (h2 + __PHI + (h1<<6) + (h1>>2));
         }
@@ -77,8 +79,15 @@ private:
 
     std::unordered_map<FlagDef, Callback, FlagDefHash> flags;
 
-    bool exec_long(const std::string& s, const std::string& ns) {
+    bool exec_long(std::vector<std::string> args, int i, const std::string& s) {
         for (auto& f : flags) {
+            std::vector<std::string> ns;
+            int n = f.first.expected_args;
+            if (i + 1 < args.size()) {
+                const auto start = i + 1;
+                const auto end = std::min((int)args.size(), start + n);
+                ns.insert(ns.end(), args.begin() + start, args.begin() + end);
+            }
             if (f.first.long_name == s.substr(2, s.length())) {
                 f.second(ns);
                 return true;
@@ -87,9 +96,16 @@ private:
         return false;
     }
 
-    bool exec_short(const std::string& s, const std::string& ns) {
+    bool exec_short(std::vector<std::string> args, int i, const std::string& s) {
         for (auto& f : flags) {
-            if (f.first.short_name == s.substr(1, s.length())) {
+            std::vector<std::string> ns;
+            int n = f.first.expected_args;
+            if (i + 1 < args.size()) {
+                const auto start = i + 1;
+                const auto end = std::min((int)args.size(), start + n);
+                ns.insert(ns.end(), args.begin() + start, args.begin() + end);
+            }
+            if (f.first.short_name == s[1]) {
                 f.second(ns);
                 return true;
             }
@@ -97,7 +113,7 @@ private:
         return false;
     }
 
-    void help(std::string) {
+    void help(std::vector<std::string>) {
         std::string out = std::format("{} v{} {}\n\n", 
             _name, _version, 
             (_short_desc == "") ? _short_desc : std::format("- {}", _short_desc)
@@ -105,8 +121,8 @@ private:
 
         out += "USAGE\n";
         // out.append(std::format("    {} [GLOBAL_OPTIONS] <command> [COMMAND_OPTIONS] [ARGS...]\n", _exec));
-        out.append(std::format("    {} [GLOBAL_OPTIONS] [ARGS...]\n", _exec));
-        // out.append(std::format("    {} [GLOBAL_OPTIONS] <subcommand> ...\n", _exec));
+        out.append(std::format("    {} [OPTIONS] [ARGS...]\n", _exec));
+        // out.append(std::format("    {} [OPTIONS] <subcommand> ...\n", _exec));
         out.append(std::format("    {} --help\n", _exec));
         // out.append(std::format("    {} <command> --help\n", _exec));
         out.append(std::format("    {} --version\n\n", _exec));
@@ -120,13 +136,13 @@ private:
         auto make_names = [&](const auto& f) {
             bool has_short = f.first.short_name != __DEFAULT_SHORT_FLAG;
             return has_short
-                ? ("-" + f.first.short_name + ", --" + f.first.long_name)
-                : ("--" + f.first.long_name);
+              ? (std::string("-") + std::string(1, f.first.short_name) + ", --" + f.first.long_name)
+              : (std::string("--") + f.first.long_name);   
         };
         std::size_t maxlen = 0;
         for (auto& f : flags) maxlen = std::max(maxlen, make_names(f).size());
         std::ostringstream oss;
-        oss << "GLOBAL OPTIONS\n";
+        oss << "OPTIONS\n";
         for (auto& f : flags) {
             std::string names = make_names(f);
             oss << "    "
@@ -141,4 +157,13 @@ private:
     }
 };
 
-// TODO: Common options, arguments, examples, exit status, configuration, see also
+/* TODO:
+ * - Read args as int and float instead of having to manually convert from string
+ * - Features:
+ *  - Common options
+ *  - Arguments 
+ *  - Examples 
+ *  - Exit status
+ *  - Configuration
+ *  - See also
+ */
