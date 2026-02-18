@@ -4,6 +4,15 @@
 
 #include "clair.hh"
 
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <functional>
+#include <stdexcept>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+
 #define TAB "    "
 
 inline bool check_prefix(const std::string& s, const std::string& p) {
