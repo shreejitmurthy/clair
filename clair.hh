@@ -6,15 +6,9 @@
 
 #include <vector>
 #include <string>
-#include <memory>
 #include <unordered_map>
-#include <type_traits>
 #include <functional>
-#include <stdexcept>
-#include <format>
-#include <iostream>
-#include <iomanip>
-#include <sstream>
+
 
 #define __DEFAULT_SHORT_OPT '!'
 
@@ -99,89 +93,15 @@ private:
             std::size_t h1 = std::hash<std::string>{}(k.long_name);
             std::size_t h2 = std::hash<char>{}(k.short_name);
             // Fibonacci hashing
-            return h1 ^ (h2 + __PHI + (h1<<6) + (h1>>2));
+            return h1 ^ (h2 + __PHI + (h1 << 6) + (h1 >> 2));
         }
     } OptionDefHash;
 
     std::unordered_map<OptionDef, Callback, OptionDefHash> options;
 
-    bool exec_long(std::vector<std::string> args, int i, const std::string& s) {
-        for (auto& f : options) {
-            std::vector<std::string> ns;
-            int n = f.first.expected_args;
-            if (i + 1 < args.size()) {
-                const auto start = i + 1;
-                const auto end = std::min((int)args.size(), start + n);
-                ns.insert(ns.end(), args.begin() + start, args.begin() + end);
-            }
-            if (f.first.long_name == s.substr(2, s.length())) {
-                f.second(ns);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool exec_short(std::vector<std::string> args, int i, const std::string& s) {
-        for (auto& o : options) {
-            std::vector<std::string> ns;
-            int n = o.first.expected_args;
-            if (i + 1 < args.size()) {
-                const auto start = i + 1;
-                const auto end = std::min((int)args.size(), start + n);
-                ns.insert(ns.end(), args.begin() + start, args.begin() + end);
-            }
-            if (o.first.short_name == s[1]) {
-                o.second(ns);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void help(std::vector<std::string>) {
-        std::string out = std::format("{} v{} {}\n\n", 
-            _name, _version, 
-            (_short_desc == "") ? _short_desc : std::format("- {}", _short_desc)
-        );
-
-        out += "USAGE\n";
-        // out.append(std::format("    {} [GLOBAL_OPTIONS] <command> [COMMAND_OPTIONS] [ARGS...]\n", _exec));
-        out.append(std::format("    {} [OPTIONS] [ARGS...]\n", _exec));
-        // out.append(std::format("    {} [OPTIONS] <subcommand> ...\n", _exec));
-        out.append(std::format("    {} --help\n", _exec));
-        // out.append(std::format("    {} <command> --help\n", _exec));
-        out.append(std::format("    {} --version\n\n", _exec));
-
-        out += "DESCRIPTION\n";
-        out.append(std::format("    {}\n\n", _description));
-
-        // TODO: Commands support
-        // out += "COMMANDS\n";
-
-        auto make_names = [&](const auto& f) {
-            bool has_short = f.first.short_name != __DEFAULT_SHORT_OPT;
-            return has_short
-              ? (std::string("-") + std::string(1, f.first.short_name) + ", --" + f.first.long_name)
-              : (std::string("--") + f.first.long_name);   
-        };
-        std::size_t maxlen = 0;
-        for (auto& f : options) maxlen = std::max(maxlen, make_names(f).size());
-        std::ostringstream oss;
-        // Give option to sort this list in future.
-        oss << "OPTIONS\n";
-        for (auto& f : options) {
-            std::string names = make_names(f);
-            oss << "    "
-                << std::left << std::setw(static_cast<int>(maxlen + 2)) << names
-                << f.first.desc << '\n';
-        }
-        out += oss.str() + "\n";
-
-        if (_notes != "") out += "NOTES\n    " + _notes;
-
-        std::cout << out << std::endl;
-    }
+    bool exec_long(std::vector<std::string> args, int i, const std::string& s);
+    bool exec_short(std::vector<std::string> args, int i, const std::string& s);
+    void help(std::vector<std::string>);
 };
 
 /* TODO:
